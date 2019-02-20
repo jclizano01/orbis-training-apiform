@@ -2,6 +2,7 @@
 
 include ./makefiles/virtual-env.mk
 include ./makefiles/function-lambda.mk
+include ./makefiles/deploy-stack.mk
 
 ## GENERAL ##
 OWNER            = orbis
@@ -39,7 +40,6 @@ build: ## Construir imagen para development: make build
 		-t $(IMAGE_DEV) \
 		docker/dev/ \
 		--no-cache
-
 
 ## Target Help ##
 

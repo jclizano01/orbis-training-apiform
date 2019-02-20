@@ -13,17 +13,21 @@ SOURCE_BUCKET_KEY     = build/lambda/${ENV}/${LAMBDA_FUNCTION_NAME}.zip
 
 define create_zip_site_packages
  	@cd ${PWD}/${VENV_DIR}/lib/python3.6/site-packages && \
-	 zip -r9 $(LAMBDA_FUNCTION_NAME).zip *
+	zip -r9 $(LAMBDA_FUNCTION_NAME).zip *
+endef
+
+define move_zip_site_packages_app
+	@mv ${PWD}/${VENV_DIR}/lib/python3.6/site-packages/$(LAMBDA_FUNCTION_NAME).zip ./app
 endef
 
 define move_zip_site_packages
-	@mv ${PWD}/${VENV_DIR}/lib/python3.6/site-packages/$(LAMBDA_FUNCTION_NAME).zip ./
+	@mv ${PWD}/app/$(LAMBDA_FUNCTION_NAME).zip ./
 endef
 
 define add directory app to the zip
 	@echo "Add files app to package archive: $(LAMBDA_FUNCTION_NAME).zip"
-	@cd app && \
-	 zip -gr9 $(PWD)/$(LAMBDA_FUNCTION_NAME).zip *
+	@cd ./app && \
+	zip -gr9 $(PWD)/$(LAMBDA_FUNCTION_NAME).zip *
 endef
 
 ## TARGETS ##
@@ -31,8 +35,9 @@ endef
 package.function: ## Empaqueta la funcion lambda en un archivo zip: make create.lambda.zip
 	@echo "Create package archive of lambda..."
 	$(call create_zip_site_packages)
-	$(call move_zip_site_packages)
+	$(call move_zip_site_packages_app)
 	$(call add directory app to the zip)
+	$(call move_zip_site_packages)
 
 update.function: ## Actualizar funcion lambda: make update.function	
 	@echo "Update function code lambda..."
@@ -51,7 +56,7 @@ upload.function.bucket: ## Sube la funcion lambda al bucket s3: make upload.func
 	 cp ./$(LAMBDA_FUNCTION_NAME).zip \
 	 s3://$(SOURCE_BUCKET_NAME)/$(SOURCE_BUCKET_KEY)
 
-delete.function.bucket: ## Elimina la funcion lambda de s3: make delete.function.bucket
-	@echo "Delete function lambda in s3"
+delete.function.bucket: ## Elimina package lambda de s3: make delete.function.bucket
+	@echo "Delete package lambda in s3"
 	@aws s3 \
 	 rm s3://${SOURCE_BUCKET_NAME}/$(SOURCE_BUCKET_KEY)

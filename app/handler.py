@@ -8,7 +8,6 @@ from api.utils.config import get_config_env
 from api.utils.response import prepare_response
 from api.resources import ContactResource
 
-
 def main(event, context):
     response = prepare_response(200, {})
     try:
@@ -19,7 +18,7 @@ def main(event, context):
         contact = ContactResource(config)
         response = contact.on_post(json.loads(event['body']))
     except ExceptionHandler as error:
-        logger.error(str(error))
+        # logger.error(str(error))
         response = prepare_response(509, {'message': str(error) })
 
     return response

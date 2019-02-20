@@ -1,0 +1,216 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: "orbis-training-apiform"
+
+Mappings:
+  Environments:
+    dev:
+      Region: "eu-west-1"
+
+    pre:
+      Region: "us-west-2"
+
+    prod:
+      Region: "us-east-1"
+
+Parameters:
+  Owner:
+    Description: "Parametro que define el propietario"
+    Type: String
+    Default: "orbis"
+  ServiceName:
+    Description: "Parametro que define el nombre del servicio"
+    Type: String
+  Environment:
+    Description: "Parametro que define el entorno por region"
+    Type: String
+  UserName:
+    Description: "Parametro que define el usuario"
+    Type: String
+  LambdaBucketName:
+    Description: "Nombre del Bucket donde se almacena el zip del codigo lambda"
+    Type: String
+  LambdaBucketKey:
+    Description: "Path del bucket s3 donde se almadena el zip del codigo lambda"
+    Type: String
+
+Conditions:
+  IsProd: !Equals ["prod", !Ref Environment]
+
+Resources:
+  TableTarget:
+    Type: 'AWS::DynamoDB::Table'
+    Properties:
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+      ProvisionedThroughput:
+        ReadCapacityUnits: 5
+        WriteCapacityUnits: 5
+      TableName: !Join
+        - "-"
+        - - !Sub "${Owner}"
+          - !Sub "${Environment}"
+          - !Sub "${ServiceName}"
+          - !Sub "${UserName}"
+
+  apiGateway:
+    Type: AWS::ApiGateway::RestApi
+    Properties:
+      Name: !Join
+       - "-"
+       - - !Sub "${Owner}"
+         - !Sub "${Environment}"
+         - !Sub "${ServiceName}"
+         - !Sub "${UserName}"
+      Description: !Join
+       - "-"
+       - - !Sub "${Owner}"
+         - !Sub "${Environment}"
+         - !Sub "${ServiceName}"
+         - !Sub "${UserName}"
+      FailOnWarnings: true
+
+  LambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Join
+       - "."
+       - - !Sub "${Owner}"
+         - !Sub "${Environment}"
+         - !Sub "${ServiceName}"
+         - !Sub "${UserName}"
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              Service:
+                - "lambda.amazonaws.com"
+            Action: 
+              - "sts:AssumeRole"
+      Policies:
+        - PolicyName: !Join
+          - "."
+          - - !Sub "${Owner}"
+            - !Sub "${Environment}"
+            - !Sub "${ServiceName}"
+            - !Sub "${UserName}"
+            - "lambda"
+            - "cloudwatchlogs"
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+            - Effect: Allow
+              Action:
+                - logs:CreateLogGroup
+                - logs:CreateLogStream
+                - logs:PutLogEvents
+              Resource: "*"
+        - PolicyName: !Join
+          - "."
+          - - !Sub "${Owner}"
+            - !Sub "${Environment}"
+            - !Sub "${ServiceName}"
+            - !Sub "${UserName}"
+            - "dynamodb"
+          PolicyDocument: 
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 'dynamodb:DeleteItem'
+                  - 'dynamodb:GetItem'
+                  - 'dynamodb:PutItem'
+                  - 'dynamodb:Scan'
+                  - 'dynamodb:UpdateItem'
+                Resource: !GetAtt TableTarget.Arn
+    DependsOn: TableTarget
+
+  LambdaFunction:
+    DependsOn:
+      - LambdaRole
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Join
+        - "-"
+        - - !Sub "${Owner}"
+          - !Sub "${Environment}"
+          - !Sub "${ServiceName}"
+          - !Sub "${UserName}"
+      Description: !Join
+        - "-"
+        - - !Sub "${Owner}"
+          - !Sub "${Environment}"
+          - !Sub "${ServiceName}"
+          - !Sub "${UserName}"
+      Handler: handler.main
+      Runtime: python3.6
+      CodeUri: 
+        Bucket: !Ref LambdaBucketName
+        Key: !Ref LambdaBucketKey
+      Role: !GetAtt LambdaRole.Arn
+      MemorySize: 512
+      Timeout: 60
+      Environment:
+        Variables:
+          DB_TABLE: !Ref TableTarget
+
+  LambdaInvokePermission:
+    Type: 'AWS::Lambda::Permission'
+    Properties:
+      FunctionName: !GetAtt LambdaFunction.Arn
+      Action: 'lambda:InvokeFunction'
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Join [ "", [ 'arn:aws:execute-api:', !Ref 'AWS::Region', ":", !Ref 'AWS::AccountId', ":", !Ref 'apiGateway', "/*", ] ]
+    DependsOn: 
+      - apiGateway
+      - LambdaFunction
+
+  apiStage:
+    Type: "AWS::ApiGateway::Stage"
+    Properties:
+      DeploymentId: !Ref apiDeployment
+      MethodSettings: 
+        - DataTraceEnabled: true
+          HttpMethod: "*"
+          ResourcePath: !Sub "/${UserName}/*"
+      RestApiId: !Ref apiGateway
+      StageName: v1 
+
+  apiDeployment:
+    Type: "AWS::ApiGateway::Deployment"
+    Properties:
+      RestApiId: !Ref apiGateway
+      StageName: DummyStage
+    DependsOn: 
+      - apiGatewayPOSTMethod
+
+  apiResource:
+    Type: "AWS::ApiGateway::Resource"
+    Properties:
+      RestApiId: !Ref apiGateway
+      ParentId: !GetAtt [apiGateway, RootResourceId]
+      PathPart: "apiform"
+
+  apiGatewayPOSTMethod:
+      DependsOn: 
+        - LambdaInvokePermission
+      Type: "AWS::ApiGateway::Method"
+      Properties:
+        AuthorizationType: NONE
+        HttpMethod: POST
+        Integration:
+          IntegrationHttpMethod: POST
+          Type: "AWS_PROXY"
+          Uri: !Sub arn:aws:apigateway:${AWS::Region}:lambda:path/2015-03-31/functions/${LambdaFunction.Arn}/invocations
+        ResourceId: !Ref apiResource
+        RestApiId: !Ref apiGateway
+
+Outputs:
+  RootUrl:
+    Description: "Url principal del servicio de registro de formulario"
+    Value: !Join [ "", [ "https://", !Ref apiGateway, ".execute-api.", !Ref 'AWS::Region', ".amazonaws.com" ] ]

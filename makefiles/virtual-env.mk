@@ -2,11 +2,12 @@
 		install.libs
 
 ## GENERAL ##
+PWD = `pwd`
 REQUIREMENTS_FILE = requirements.txt
 
 create.venv: ## Crea el entorno virtual (virtualenv): make create.venv
 	@echo "Create directory of virtualenv: ${VENV_DIR}"
-	@docker container run \
+	docker run \
 		--workdir "/${APP_DIR}" \
 		--rm \
 		-it \
@@ -18,7 +19,7 @@ create.venv: ## Crea el entorno virtual (virtualenv): make create.venv
 
 install.libs: ## Instala las librerias en el entorno virtual (virtualenv): make install.libs
 	@echo "Install libraries from: ${REQUIREMENTS_FILE}"
-	@docker container run \
+	docker run \
 		--workdir "/${APP_DIR}" \
 		--rm \
 		-it \
