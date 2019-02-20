@@ -21,9 +21,8 @@ pipeline {
         }
         stage('Tercer Paso') {
             steps {
-                script {
-                    fnSteps.showEnviroment([0,1,2,3])
-                }
+                echo 'ejecucion del segundo paso de jenkinsfile'
+                fnSteps.construirImagen()
             }
         }
     }

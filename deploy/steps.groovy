@@ -32,4 +32,8 @@ def configs(def enviroment, def runtest, def bank) {
   return config
 }
 
+def construirImagen() {
+  sh 'make build'
+}
+
 return this
