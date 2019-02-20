@@ -6,7 +6,7 @@ pipeline {
         stage('Set Config') {
             steps {
                 script {
-                    echo 'Hola mundo desde jenkins ${JENKINS_ENV}' 
+                    echo "Hola mundo desde jenkins ${JENKINS_ENV}"
                 }
             }
         }
