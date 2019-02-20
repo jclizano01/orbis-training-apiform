@@ -16,7 +16,7 @@ pipeline {
         stage('Tercer Paso') {
             steps {
                 scripts {
-                    fnSteps.showEnviroment({'hola', 'munfo', 'que tal'})
+                    fnSteps.showEnviroment([0,1,2,3])
                 }
             }
         }
