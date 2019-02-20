@@ -1,3 +1,5 @@
+def fnSteps = evaluate readTrusted("deploy/steps.groovy")
+
 pipeline {
     agent any
     stages {
@@ -9,6 +11,13 @@ pipeline {
         stage('Segundo Paso') {
             steps {
                 echo 'ejecucion del segundo paso de jenkinsfile'
+            }
+        }
+        stage('Tercer Paso') {
+            steps {
+                scripts {
+                    fnSteps.showEnviroment({'hola', 'munfo', 'que tal'})
+                }
             }
         }
     }
