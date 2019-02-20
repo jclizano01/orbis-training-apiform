@@ -5,8 +5,10 @@ pipeline {
             steps {
                 echo 'Hola mundo desde jenkins'
             }
+        }
         stage('Segundo Paso') {
-                echo 'segundo paso de ejecucion'
+            steps {
+                echo 'ejecucion del segundo paso de jenkinsfile'
             }
         }
     }
