@@ -39,7 +39,7 @@ def construirImagen() {
   // sh 'make package.function'
   // sh 'make upload.function.bucket'
   // sh 'make stack.deploy'
-  echo 'hola desde construirImagen'
+  echo "hola desde construirImagen"
 }
 
 return this
