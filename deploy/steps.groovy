@@ -37,8 +37,9 @@ def construirImagen() {
   // sh 'make create.venv'
   // sh 'make install.libs'
   // sh 'make package.function'
-  sh 'make upload.function.bucket'
+  // sh 'make upload.function.bucket'
   // sh 'make stack.deploy'
+  echo 'hola desde construirImagen'
 }
 
 return this
