@@ -33,14 +33,12 @@ def configs(def enviroment, def runtest, def bank) {
 }
 
 def construirImagen() {
-  sh 'make build'
-  sh 'make create.venv'
-  sh 'make install.libs'
-  sh 'make package.function'
+  // sh 'make build'
+  // sh 'make create.venv'
+  // sh 'make install.libs'
+  // sh 'make package.function'
   sh 'make upload.function.bucket'
   sh 'make stack.deploy'
 }
-
-
 
 return this
