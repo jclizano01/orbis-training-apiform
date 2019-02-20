@@ -15,7 +15,7 @@ pipeline {
         }
         stage('Tercer Paso') {
             steps {
-                scripts {
+                script {
                     fnSteps.showEnviroment([0,1,2,3])
                 }
             }
