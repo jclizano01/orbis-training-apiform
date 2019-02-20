@@ -27,7 +27,3 @@ var/
 
 /app/**/__pycache__/
 /app/cip_cli.egg-info/
-
-# Archivo package
-orbis-lab-trainnig-apiform.zip
-

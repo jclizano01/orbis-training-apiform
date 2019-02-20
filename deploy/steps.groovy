@@ -38,7 +38,7 @@ def construirImagen() {
   // sh 'make install.libs'
   // sh 'make package.function'
   sh 'make upload.function.bucket'
-  sh 'make stack.deploy'
+  // sh 'make stack.deploy'
 }
 
 return this
