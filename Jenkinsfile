@@ -3,9 +3,11 @@ def fnSteps = evaluate readTrusted("deploy/steps.groovy")
 pipeline {
     agent any
     stages {
-        stage('BIenvenido') {
+        stage('Set Config') {
             steps {
-                echo 'Hola mundo desde jenkins'
+                script {
+                    echo 'Hola mundo desde jenkins ${JENKINS_ENV}' 
+                }
             }
         }
         stage('Segundo Paso') {
